@@ -1,24 +1,32 @@
 from io import StringIO
 program = """"""
 program = """
-X を 10 にする
-もし X 100 = なら
+X を 1 にする
+Y を 0 にする
+もし X = 1 かつ Y = 1 なら
 [
     "True" とひょうじする
 ]
 でなければ
 [
-    もし X 1000 = なら
-    [
-        "Trueee" とひょうじする
-    ]
-    でなければ
-    [
-        "Trueeeeeeeee" とひょうじする
-    ]
+    "False" とひょうじする
 ]
 おわる
 """
+
+precedence = {
+    "ではない": 3,
+    "*": 2,
+    "/": 2,
+    "+": 1,
+    "-": 1,
+    ">": 0,
+    "<": 0,
+    "=": 0,
+    "!=": 0,
+    "かつ": -1,
+    "または": -2,
+}
 
 def make_env():
     global env
@@ -44,6 +52,32 @@ def push_local():
 def pop_local():
     env.pop()
     # print(f"==> env={env}")
+
+# 中置記法を逆ポーランド記法に変換
+def infix_to_postfix(tokens):
+    output = []
+    ops = []
+
+    for token in tokens:
+        # オペランド
+        if token.isalpha() or token.isdecimal() or token.startswith('"'):
+            output.append(token)
+
+        # 演算子
+        else:
+            # 自分より優先度が高い演算子があれば先に出力
+            while (
+                ops
+                and ops[-1] in precedence
+                and precedence[ops[-1]] >= precedence[token]
+            ):
+                output.append(ops.pop())
+            ops.append(token)
+
+    while ops:
+        output.append(ops.pop())
+
+    return output
 
 # 変数か数字か文字列かを判断する関数
 def eval_id_or_literal(token):
@@ -160,6 +194,19 @@ def eval_exp(tokens):
         elif token == "!=":
             sp = sp - 1
             stack[sp] = stack[sp] != stack[sp + 1]
+            
+        # 論理演算子
+        elif token == "かつ":
+            sp = sp - 1
+            stack[sp] = stack[sp] and stack[sp + 1]
+            
+        elif token == "または":
+            sp = sp - 1
+            stack[sp] = stack[sp] or stack[sp + 1]
+            
+        elif token == "ではない":
+            # Unary not: invert the top-of-stack value without changing sp
+            stack[sp] = not stack[sp]
         
         # 変数参照
         else:
@@ -170,11 +217,11 @@ def eval_exp(tokens):
 
 # 受け取ったトークンを評価し計算が必要であればする関数
 def eval_tokens(tokens):
-    if len(tokens) >= 2:
-        result = eval_exp(tokens)
-    else:
-        result = eval_id_or_literal(tokens[0])
-    return result
+    if len(tokens) == 1:
+        return eval_id_or_literal(tokens[0])
+
+    postfix = infix_to_postfix(tokens)
+    return eval_exp(postfix)
 
 def execute():
     for _ in range(INF):

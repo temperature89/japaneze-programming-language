@@ -1,6 +1,25 @@
 from io import StringIO
 program = ""
 # program = """
+# X を 10 にする
+# もし X 100 = なら
+# [
+#     "True" とひょうじする
+# ]
+# でなければ
+# [
+#     もし X 1000 = なら
+#     [
+#         "Trueee" とひょうじする
+#     ]
+#     でなければ
+#     [
+#         "Trueeeeeeeee" とひょうじする
+#     ]
+# ]
+# おわる
+# """
+# program = """
 # ていぎ fib n
 # [
 #     a を 1 にする
@@ -161,6 +180,11 @@ def exec_inst(line):
     elif tokens[0] == "もし" and last_token(tokens) == "なら":
         result = eval_tokens(tokens[1 : len(tokens) - 1])
         translated_line += f"if {result}:"
+        PC += 1
+        generated_code.append(translated_line)
+        
+    elif tokens[0] == "でなければ":
+        translated_line += f"else:"
         PC += 1
         generated_code.append(translated_line)
         
