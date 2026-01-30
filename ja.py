@@ -1,23 +1,17 @@
 from io import StringIO
 program = """"""
-# program = """
-# X を 1 にする
-# Y を 0 にする
-# もし X = 1 かつ Y = 1 なら
-# [
-#     "True" とひょうじする
-# ]
-# でなければ
-# [
-#     "False" とひょうじする
-# ]
-# おわる
-# """
+program = """
+X を 0 にする
+X >= 10 までくりかえす
+[
+    X とひょうじする
+    X を X + 1 にする
+]
+"""
 
 """
 ToDO
 言語の拡張
-- までくりかえす
 - 文字の結合
 例外処理
 UI調整
@@ -330,6 +324,16 @@ def exec_inst(line):
         
         else:
             raise SyntaxError
+    
+    elif last_token(tokens) == "までくりかえす":
+        PC += 1
+        saved_PC = PC
+        while not eval_tokens(tokens[0 : len(tokens) - 1]):
+            PC = saved_PC
+            cont = exec_block()
+            # contにはプログラムを続けるかどうかのブール値が入る
+            if cont is False:
+                return False
     
     elif tokens[0] == "ていぎ":
         update_env(tokens[1], ('proc', PC, tokens[2:]))

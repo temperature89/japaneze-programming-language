@@ -1,15 +1,11 @@
 from io import StringIO
 program = ""
 program = """
-X を 1 にする
-Y を 0 にする
-もし X = 1 かつ Y = 1 なら
+X を 0 にする
+X >= 10 までくりかえす
 [
-    "True" とひょうじする
-]
-でなければ
-[
-    "False" とひょうじする
+    X とひょうじする
+    X を X + 1 にする
 ]
 おわる
 """
@@ -159,6 +155,12 @@ def exec_inst(line):
         
     elif tokens[0] == "でなければ":
         translated_line += f"else:"
+        PC += 1
+        generated_code.append(translated_line)
+        
+    elif last_token(tokens) == "までくりかえす":
+        result = eval_tokens(tokens[0 : len(tokens) - 1])
+        translated_line += f"while not {result}:"
         PC += 1
         generated_code.append(translated_line)
         
