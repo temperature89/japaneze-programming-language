@@ -1,24 +1,18 @@
 from io import StringIO
 program = ""
-# program = """
-# X を 10 にする
-# もし X 100 = なら
-# [
-#     "True" とひょうじする
-# ]
-# でなければ
-# [
-#     もし X 1000 = なら
-#     [
-#         "Trueee" とひょうじする
-#     ]
-#     でなければ
-#     [
-#         "Trueeeeeeeee" とひょうじする
-#     ]
-# ]
-# おわる
-# """
+program = """
+X を 1 にする
+Y を 0 にする
+もし X = 1 かつ Y = 1 なら
+[
+    "True" とひょうじする
+]
+でなければ
+[
+    "False" とひょうじする
+]
+おわる
+"""
 # program = """
 # ていぎ fib n
 # [
@@ -82,47 +76,27 @@ def integrate_str(tokens):
             integrated_tokens.append(tokens[i])
     return integrated_tokens
 
-# 逆ポーランド記法で書かれた演算を中値記法に戻す関数
 def eval_exp(tokens):
-    stack = [0] * 100
-    sp = -1
+    translated_tokens = []
     for token in tokens:
-        if token == "+":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} + {stack[sp + 1]}"
-        elif token == "-":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} - {stack[sp + 1]}"
-        elif token == "*":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} * {stack[sp + 1]}"
-        elif token == "/":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} / {stack[sp + 1]}"
+        if token in ["+", "-", "*", "/", ">", "<", ">=", "<=", "!="]:
+            translated_tokens.append(token)
 
         elif token == "=":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} == {stack[sp + 1]}"
-        elif token == ">":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} > {stack[sp + 1]}"
-        elif token == "<":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} < {stack[sp + 1]}"
-        elif token == ">=":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} >= {stack[sp + 1]}"
-        elif token == "<=":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} <= {stack[sp + 1]}"
-        elif token == "!=":
-            sp -= 1
-            stack[sp] = f"{stack[sp]} != {stack[sp + 1]}"
-        
+            translated_tokens.append("==")
+            
+        elif token == "かつ":
+            translated_tokens.append("and")
+            
+        elif token == "または":
+            translated_tokens.append("or")
+            
+        elif token == "ではない":
+            translated_tokens.append("not")
+            
         else:
-            sp += 1
-            stack[sp] = token
-    return stack[sp]
+            translated_tokens.append(token)
+    return " ".join(translated_tokens)
 
 INF = 1000
 def execute():
