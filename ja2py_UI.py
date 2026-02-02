@@ -2,9 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 import io
 import contextlib
-# モジュールを再読み込みする
 import importlib
-import ja2py   # ← アップロードされたファイル
+import ja2py
 import ja
 
 ime_switching = False
@@ -81,12 +80,11 @@ class TranspilerUI(tk.Tk):
 
     # =========================
     # 日本語言語 実行
-    # =========================
     def run_ja(self):
         self.out.delete("1.0", tk.END)
         program = self.ja_text.get("1.0", tk.END)
 
-        # ja をリロード（再実行対応）
+        # ja をリロード
         importlib.reload(ja)
 
         # program を差し替え

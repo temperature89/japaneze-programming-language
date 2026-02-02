@@ -1,20 +1,36 @@
 from io import StringIO
 program = """"""
-program = """
-X を 0 にする
-X >= 10 までくりかえす
-[
-    X とひょうじする
-    X を X + 1 にする
-]
-"""
 
 """
-ToDO
-言語の拡張
-- 文字の結合
-例外処理
-UI調整
+ていぎ fib n
+[
+    a を 1 にする
+    b を 1 にする
+    a とひょうじする
+    b とひょうじする
+ 
+    もし n = 1 なら
+    [
+        a とひょうじする
+    ]
+
+    もし n = 2 なら
+    [
+        b とひょうじする
+    ]
+
+    tmp を 0 にする
+    n - 2 かいくりかえす
+    [
+        tmp を a + b にする
+        a を b にする
+        b を tmp にする 
+        b とひょうじする
+    ]
+]
+よびだす fib 10
+おわる 
+
 """
 
 precedence = {
@@ -29,32 +45,29 @@ precedence = {
     "!=": 0,
     "かつ": -1,
     "または": -2,
+    # "と": -3,
 }
 
 def make_env():
     global env
     g_env = dict()
     env = [g_env]
-    # print(f"==> env={env}")
 
 def lookup_env(key):
     if len(env) > 1:
-        local_env = env[-1]  # last element
+        local_env = env[-1]
         if key in local_env:
             return local_env[key]
     return env[0][key]
 
 def update_env(key, value):
     env[-1][key] = value
-    # print(f"==> env={env}")
 
 def push_local():
     env.append(dict())
-    # print(f"==> env={env}")
 
 def pop_local():
     env.pop()
-    # print(f"==> env={env}")
 
 # 中置記法を逆ポーランド記法に変換
 def infix_to_postfix(tokens):
@@ -79,8 +92,15 @@ def infix_to_postfix(tokens):
 
     while ops:
         output.append(ops.pop())
-
     return output
+
+def delete_blank(tokens):
+    n = 0
+    for token in tokens:
+        if token == "":
+            del tokens[n]
+        n += 1
+    return tokens
 
 # 変数か数字か文字列かを判断する関数
 def eval_id_or_literal(token):
@@ -96,16 +116,16 @@ def eval_id_or_literal(token):
         if token[0] == token[len(token) - 1] == quote_char: #クォートで囲まれているか(文字列かどうか)を判定
             return (token.rstrip(quote_char)).lstrip(quote_char) #クォート文字を外す
     
-    # 数値リテラル（整数か判定）
+    # 数値リテラル
     if token.isdecimal():
         return int(token)
     
-    # 変数参照（ここを修正）
-    # if token in env:    <-- 旧コード（誤り）
-    #     return lookup_env(token)
+    # 変数
     if token.isalpha():
-        return lookup_env(token)
-    raise NameError(f"{token}がていぎされていません")
+        try:
+            return lookup_env(token)
+        except:
+            raise NameError(f"{token}がていぎされていません PC={PC}")
 
 # トークンで分断された文字列を統合する関数
 def integrate_str(tokens):
@@ -128,6 +148,8 @@ def integrate_str(tokens):
                 in_quote = False
                 quote_index[quote_start_index] = n
         n += 1
+    if in_quote:
+        raise SyntaxError(f"クォートがとじられていません PC={PC}")
         
     for i in range(len(tokens)):
         if i in pass_index:
@@ -146,22 +168,21 @@ def integrate_str(tokens):
 
 INF = 1000
 def find_body_end(PC):
-    # assumes lines[PC] == "["
     for _ in range(INF):
         PC += 1
         if PC >= len(lines):
-            raise Exception("たいおうする [ がみつかりません")
+            raise Exception(f"たいおうする [ がみつかりません PC={PC}")
         tokens = lines[PC].split(" ")
         if tokens[0] == "]":
             return PC
         if tokens[0] == "[":
             PC = find_body_end(PC)
-    raise Exception("ここにとうたつするはずがありません")
+    raise Exception(f"ここにとうたつするはずがありません PC={PC}")
 
 # tokenが数字の時、stackに入れて次のインデックスに行く
 # tokenが演算子の時、1つインデックスを戻してそのインデックスとその次のインデックスの数値に計算を適用
 def eval_exp(tokens):
-    stack = [0] * 100
+    stack = [""] * 100
     sp = -1
     for token in tokens:
         # 演算
@@ -208,8 +229,11 @@ def eval_exp(tokens):
             stack[sp] = stack[sp] or stack[sp + 1]
             
         elif token == "ではない":
-            # Unary not: invert the top-of-stack value without changing sp
             stack[sp] = not stack[sp]
+            
+        # elif token == "と":
+        #     sp = sp - 1
+        #     stack[sp] = str(stack[sp]) + str(stack[sp])
         
         # 変数参照
         else:
@@ -224,7 +248,12 @@ def eval_tokens(tokens):
         return eval_id_or_literal(tokens[0])
 
     postfix = infix_to_postfix(tokens)
-    return eval_exp(postfix)
+    try:
+        return eval_exp(postfix)
+    except TypeError:
+        raise SyntaxError(f"えんざんがふじゅうぶんです PC={PC}")
+    except ZeroDivisionError:
+        raise ZeroDivisionError(f"0でわってはいけません PC={PC}")
 
 def execute():
     for _ in range(INF):
@@ -247,7 +276,7 @@ def exec_block():
     if not tokens:
         return True
     if tokens[0] != "[":
-        raise Exception("ブロックは [ ではじまるひつようがあります")
+        raise Exception(f"ブロックは [ ではじまるひつようがあります PC={PC}")
     for _ in range(INF):
         line = lines[PC]
         tokens = line.split(" ")
@@ -264,13 +293,15 @@ def exec_block():
 def exec_inst(line):
     global PC, saved_boolen
     tokens = line.split(" ")
+    tokens = delete_blank(tokens)
     tokens = integrate_str(tokens)
     
-    if tokens[0] == "おわる":
-        return False
-    
-    if tokens[0] == "":  # 空行またはトークンなし
+    if tokens == []:
         PC += 1
+        return
+    
+    elif tokens[0] == "おわる":
+        return False
     
     elif last_token(tokens) == "とひょうじする":
         result = eval_tokens(tokens[0 : len(tokens) - 1])
@@ -308,7 +339,7 @@ def exec_inst(line):
                 return False
         else:
             saved_boolen = False
-            skip_block()
+            PC = find_body_end(PC + 1) + 1
         
     elif tokens[0] == "でなければ":
         PC += 1
@@ -320,10 +351,10 @@ def exec_inst(line):
         
         elif saved_boolen == True:
             saved_boolen = None
-            skip_block()
+            PC = find_body_end(PC + 1) + 1
         
         else:
-            raise SyntaxError
+            raise SyntaxError(f"もし~ならがそんざいしません PC={PC}")
     
     elif last_token(tokens) == "までくりかえす":
         PC += 1
@@ -342,7 +373,10 @@ def exec_inst(line):
         
     elif tokens[0] == "よびだす":
         next_PC = PC + 1
-        func_value = lookup_env(tokens[1])
+        try:
+            func_value = lookup_env(tokens[1])
+        except:
+            raise NameError(f"{tokens[1]}がみつかりません")
         args = func_value[2]
 
         PC = func_value[1] + 1

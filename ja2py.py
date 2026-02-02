@@ -1,14 +1,6 @@
 from io import StringIO
 program = ""
-program = """
-X を 0 にする
-X >= 10 までくりかえす
-[
-    X とひょうじする
-    X を X + 1 にする
-]
-おわる
-"""
+
 # program = """
 # ていぎ fib n
 # [
@@ -35,7 +27,7 @@ X >= 10 までくりかえす
 # おわる
 # """
 
-# トークンで分断された文字列を統合する関数
+# トークンで分断された文字列を統合
 def integrate_str(tokens):
     if len(tokens) == 1:
         return tokens
